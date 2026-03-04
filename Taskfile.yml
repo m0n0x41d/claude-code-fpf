@@ -68,19 +68,29 @@ tasks:
     desc: "Full release: sync → check for changes → build → tag → push"
     cmds:
       - task: sync
-      - task: _release-if-changed
-
-  _release-if-changed:
-    internal: true
-    preconditions:
-      - sh: '[ "$(cat FPF_VERSION)" != "$(git show HEAD:FPF_VERSION 2>/dev/null)" ]'
-        msg: "No upstream changes. Skipping release."
-    cmds:
-      - task: build-db
-      - task: build-all
       - |
-        VERSION="v0.$(date +%Y.%m%d)"
+        NEW_SHA=$(cat FPF_VERSION)
+        OLD_SHA=$(git show HEAD:FPF_VERSION 2>/dev/null || echo "")
+        if [ "$NEW_SHA" = "$OLD_SHA" ]; then
+          echo "✓ No upstream changes. Nothing to release."
+          exit 0
+        fi
+
+        echo "New FPF version detected: $NEW_SHA"
+        echo "Building index..."
         FPF_SHA=$(cat FPF_VERSION)
+        go run ./cmd/indexer "{{.FPF_DIR}}/FPF-Spec.md" "{{.DB_PATH}}" "$FPF_SHA"
+
+        echo "Cross-compiling..."
+        mkdir -p {{.DIST_DIR}}
+        VERSION="v0.$(date +%Y.%m%d)"
+        for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
+          OS="${target%%/*}"
+          ARCH="${target##*/}"
+          OUT="{{.DIST_DIR}}/fpf-rag-${OS}-${ARCH}"
+          echo "  $OUT"
+          GOOS=$OS GOARCH=$ARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "$OUT" ./cmd/fpf-rag
+        done
 
         git add FPF_VERSION {{.DB_PATH}}
         git commit -m "chore: update FPF index to ${FPF_SHA:0:7}
