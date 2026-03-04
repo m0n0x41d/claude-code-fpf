@@ -6,7 +6,20 @@ argument-hint: "[task, concept, or question]"
 
 # FPF — First Principles Framework
 
-FPF is a systems thinking methodology by Anatoly Levenchuk. This skill gives you its operational core — apply it to reason about problems, solutions, and decisions. Use the RAG search for deeper context when needed.
+FPF is a systems thinking methodology by Anatoly Levenchuk. This skill gives you its operational core — apply it to reason about problems, solutions, and decisions.
+
+---
+
+## Depth calibration
+
+Before starting, assess the scale of the request:
+
+| Mode | When | What to do |
+|------|------|------------|
+| **Quick** | Tactical choices, clear trade-offs, ≤2 real options | Frame → Variants (table) → Recommendation. 1-2 paragraphs. |
+| **Deep** | Architectural decisions, ambiguous problems, irreversible choices, user explicitly asks for depth | Full 5-step algorithm with ADI, evidence records, Pareto analysis. |
+
+**Default is Quick.** Escalate to Deep when: the decision is hard to reverse, multiple stakeholders are affected, or the problem framing itself is unclear.
 
 ---
 
@@ -26,9 +39,13 @@ The bottleneck is **problem quality**, not solution speed. Before generating any
   - **Acceptance criteria** — hard constraints that must hold
   - **Observation indicators** — things you monitor but don't optimize (Anti-Goodhart: monitoring what you don't optimize prevents reward hacking)
 
+> RAG trigger: for formal problem card format → `fpf-rag search "problem card PROB"`
+
 ### 2. Characterize before comparing
 
 Before evaluating anything, define the **characteristic space** — what dimensions matter and how they're measured. Without this, comparisons are arbitrary.
+
+> RAG trigger: for characterization templates → `fpf-rag search "characterization CHR"`
 
 ### 3. Generate genuinely distinct variants
 
@@ -37,6 +54,8 @@ Before evaluating anything, define the **characteristic space** — what dimensi
 - Identify each variant's **weakest link** (WLNK) — the component that bounds overall quality
 - Preserve **1-2 stepping stones** — variants that open future possibilities even if not optimal now
 
+> RAG trigger: for NQD assessment rules → `fpf-rag search "NQD variant quality"`
+
 ### 4. Select from the Pareto front
 
 - **State the selection policy BEFORE applying it** — what matters most and why
@@ -44,6 +63,8 @@ Before evaluating anything, define the **characteristic space** — what dimensi
 - Hold the **Pareto front** — don't discard non-dominated options prematurely
 - When a variant adds complexity over a simpler one, the added components must justify the new weak links they introduce (**MONO**)
 - At comparable budgets, prefer methods with **better scaling slopes** over hand-tuned solutions (**BLP**)
+
+> RAG trigger: for formal selection procedure → `fpf-rag search "selection policy SEL Pareto"`
 
 ### 5. Test against reality
 
@@ -54,6 +75,44 @@ Before evaluating anything, define the **characteristic space** — what dimensi
   - **G** (ClaimScope): what exactly does the claim cover? (set-valued, NOT ordinal)
   - **R** (Reliability): how likely is the claim true? ([0,1], min across chain)
 - **Close the loop** — evidence either corroborates or refutes. If refuted, update the problem framing and iterate.
+
+> RAG trigger: for evidence record format → `fpf-rag search "evidence record EVID F-G-R"`
+
+---
+
+## Output format
+
+Structure your response using this template. In Quick mode, compress to the essential sections.
+
+```
+## Problem
+<What's anomalous or unclear. One paragraph.>
+
+## Hypotheses
+1. <Hypothesis A> — <why it could be true>
+2. <Hypothesis B> — <why it could be true>
+3. <Hypothesis C> — <why it could be true>
+
+## Variants
+
+| Variant | <Axis 1> | <Axis 2> | <Axis 3> | Weak link |
+|---------|----------|----------|----------|-----------|
+| A. ...  | ...      | ...      | ...      | ...       |
+| B. ...  | ...      | ...      | ...      | ...       |
+| C. ...  | ...      | ...      | ...      | ...       |
+
+## Selection
+**Policy:** <what matters most and why>
+**Recommendation:** <which variant and why>
+**Stepping stone:** <what option to preserve for the future, if any>
+
+## Next action
+<Concrete step the user should take now>
+```
+
+In **Quick mode**, the minimum viable output is: Problem (1-2 sentences) → Variants (table) → Recommendation + Next action.
+
+In **Deep mode**, include all sections plus: ADI phase labels, F-G-R confidence assessments, evidence records, and lifecycle stage.
 
 ---
 
@@ -112,15 +171,9 @@ Always state which stage you're in. Don't skip stages.
 
 ---
 
-## When to search the RAG
+## RAG search reference
 
-The above is enough for applying FPF reasoning. Search `fpf-rag` when you need:
-
-- **Specific templates** — exact format for problem cards, evidence records, decision records, etc.
-- **Deep definitions** — formal specification of a concept beyond the summary above
-- **Conformance checklists** — detailed rules for a specific FPF pattern
-- **Aggregation rules** — how to compose assessments across components (Γ flavours)
-- **Specific patterns** — A.* (concept patterns) or B.* (process patterns) by number
+The above is enough for applying FPF reasoning. Search `fpf-rag` when you need formal templates, deep definitions, conformance checklists, aggregation rules, or specific patterns (A.*/B.*).
 
 ```bash
 # Quick search
