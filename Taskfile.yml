@@ -68,16 +68,14 @@ tasks:
     desc: "Full release: sync → check for changes → build → tag → push"
     cmds:
       - task: sync
-      - |
-        NEW_SHA=$(cat FPF_VERSION)
-        OLD_SHA=$(git show HEAD:FPF_VERSION 2>/dev/null || echo "")
-        if [ "$NEW_SHA" = "$OLD_SHA" ]; then
-          echo "No upstream changes. Skipping release."
-          exit 0
-        fi
+      - task: _release-if-changed
 
-        echo "New FPF version detected: $NEW_SHA"
-        echo "Building..."
+  _release-if-changed:
+    internal: true
+    preconditions:
+      - sh: '[ "$(cat FPF_VERSION)" != "$(git show HEAD:FPF_VERSION 2>/dev/null)" ]'
+        msg: "No upstream changes. Skipping release."
+    cmds:
       - task: build-db
       - task: build-all
       - |

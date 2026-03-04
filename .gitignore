@@ -5,6 +5,9 @@ data/FPF/
 dist/
 /fpf-rag
 
+# Taskfile cache
+.task/
+
 # Go
 *.exe
 *.test
