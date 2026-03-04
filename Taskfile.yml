@@ -1,0 +1,100 @@
+version: '3'
+
+vars:
+  FPF_REPO: https://github.com/ailev/FPF.git
+  FPF_DIR: data/FPF
+  DB_PATH: cmd/fpf-rag/fpf.db
+  DIST_DIR: dist
+  MODULE: github.com/m0n0x41d/claude-code-fpf
+
+tasks:
+  sync:
+    desc: Pull latest FPF spec from upstream. Skips if unchanged.
+    cmds:
+      - |
+        if [ ! -d "{{.FPF_DIR}}" ]; then
+          echo "Cloning FPF..."
+          git clone --depth 1 {{.FPF_REPO}} {{.FPF_DIR}}
+        else
+          echo "Pulling latest FPF..."
+          git -C {{.FPF_DIR}} pull --ff-only
+        fi
+      - |
+        NEW_SHA=$(git -C {{.FPF_DIR}} rev-parse HEAD)
+        OLD_SHA=$(cat FPF_VERSION 2>/dev/null || echo "")
+        if [ "$NEW_SHA" = "$OLD_SHA" ]; then
+          echo "FPF is up to date ($NEW_SHA). Nothing to do."
+        else
+          echo "FPF updated: ${OLD_SHA:-none} → $NEW_SHA"
+          echo "$NEW_SHA" > FPF_VERSION
+        fi
+
+  build-db:
+    desc: Build SQLite FTS5 index from FPF-Spec.md
+    deps: [sync]
+    cmds:
+      - |
+        FPF_SHA=$(cat FPF_VERSION)
+        go run ./cmd/indexer "{{.FPF_DIR}}/FPF-Spec.md" "{{.DB_PATH}}" "$FPF_SHA"
+    sources:
+      - FPF_VERSION
+    generates:
+      - "{{.DB_PATH}}"
+
+  build:
+    desc: Build fpf-rag binary for current platform
+    deps: [build-db]
+    cmds:
+      - |
+        VERSION="v0.$(date +%Y.%m%d)"
+        go build -ldflags "-s -w -X main.version=$VERSION" -o fpf-rag ./cmd/fpf-rag
+
+  build-all:
+    desc: Cross-compile fpf-rag for all supported platforms
+    deps: [build-db]
+    cmds:
+      - mkdir -p {{.DIST_DIR}}
+      - |
+        VERSION="v0.$(date +%Y.%m%d)"
+        for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
+          OS="${target%%/*}"
+          ARCH="${target##*/}"
+          OUT="{{.DIST_DIR}}/fpf-rag-${OS}-${ARCH}"
+          echo "Building $OUT..."
+          GOOS=$OS GOARCH=$ARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "$OUT" ./cmd/fpf-rag
+        done
+
+  release:
+    desc: "Full release: sync → check for changes → build → tag → push"
+    cmds:
+      - task: sync
+      - |
+        NEW_SHA=$(cat FPF_VERSION)
+        OLD_SHA=$(git show HEAD:FPF_VERSION 2>/dev/null || echo "")
+        if [ "$NEW_SHA" = "$OLD_SHA" ]; then
+          echo "No upstream changes. Skipping release."
+          exit 0
+        fi
+
+        echo "New FPF version detected: $NEW_SHA"
+        echo "Building..."
+      - task: build-db
+      - task: build-all
+      - |
+        VERSION="v0.$(date +%Y.%m%d)"
+        FPF_SHA=$(cat FPF_VERSION)
+
+        git add FPF_VERSION {{.DB_PATH}}
+        git commit -m "chore: update FPF index to ${FPF_SHA:0:7}
+
+        FPF upstream commit: $FPF_SHA
+        https://github.com/ailev/FPF/commit/$FPF_SHA"
+
+        git tag -a "$VERSION" -m "Release $VERSION (FPF: ${FPF_SHA:0:7})"
+        echo "Tagged $VERSION. Run 'git push && git push --tags' to trigger CI release."
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf {{.DIST_DIR}} fpf-rag
+      - rm -f {{.DB_PATH}}
