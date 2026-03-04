@@ -1,84 +1,154 @@
 ---
 name: fpf
-description: "Query the First Principles Framework (FPF) for reasoning guidance — principles, methods, templates, and terminology."
-argument-hint: "[concept or question]"
+description: "Apply First Principles Framework (FPF) reasoning — principled problem design, variant generation, and evidence-based decisions."
+argument-hint: "[task, concept, or question]"
 ---
 
-# FPF — First Principles Framework Reference
+# FPF — First Principles Framework
 
-You have access to the full FPF specification via a search tool. Use it when you need precise definitions, procedures, or principles from the framework.
+FPF is a systems thinking methodology by Anatoly Levenchuk. This skill gives you its operational core — apply it to reason about problems, solutions, and decisions. Use the RAG search for deeper context when needed.
 
-## When to search
+---
 
-- You encounter FPF terminology you're unsure about
-- You need a specific template, procedure, or principle
-- The user references FPF concepts in their request
-- You need to apply principled reasoning (problem framing, variant generation, evidence, etc.)
+## Core thinking algorithm
 
-## How to search
+When asked to apply FPF or when facing a non-trivial decision, follow this loop:
 
-Run the binary at the path shown below. It returns relevant FPF sections as markdown.
+### 1. Frame the problem BEFORE solving it
+
+The bottleneck is **problem quality**, not solution speed. Before generating any solution:
+
+- **State what's anomalous** — what observation doesn't fit the current model?
+- **Generate ≥3 hypotheses** — genuinely distinct explanations, not variations of one
+- **Identify trade-off axes** — what dimensions are in tension? (speed vs safety, generality vs performance, etc.)
+- **Define acceptance criteria** — how will you know the problem is solved? Separate:
+  - **Optimization targets** (1-3 max) — what you're actively improving
+  - **Acceptance criteria** — hard constraints that must hold
+  - **Observation indicators** — things you monitor but don't optimize (Anti-Goodhart: monitoring what you don't optimize prevents reward hacking)
+
+### 2. Characterize before comparing
+
+Before evaluating anything, define the **characteristic space** — what dimensions matter and how they're measured. Without this, comparisons are arbitrary.
+
+### 3. Generate genuinely distinct variants
+
+- Produce **≥3 variants** that differ in **kind**, not degree
+- For each variant, assess quality as **multi-dimensional** (NQD) — never collapse to a single score
+- Identify each variant's **weakest link** (WLNK) — the component that bounds overall quality
+- Preserve **1-2 stepping stones** — variants that open future possibilities even if not optimal now
+
+### 4. Select from the Pareto front
+
+- **State the selection policy BEFORE applying it** — what matters most and why
+- **Ensure parity** — fair comparison requires equal conditions (same inputs, same constraints)
+- Hold the **Pareto front** — don't discard non-dominated options prematurely
+- When a variant adds complexity over a simpler one, the added components must justify the new weak links they introduce (**MONO**)
+- At comparable budgets, prefer methods with **better scaling slopes** over hand-tuned solutions (**BLP**)
+
+### 5. Test against reality
+
+- **Predict before testing** — state what you expect to observe if the hypothesis is correct AND if it's wrong
+- **Record evidence** — commands run, outputs observed, interpretation
+- **Assess confidence** — using F-G-R:
+  - **F** (Formality): how rigorous is the method? (ordinal, min across chain)
+  - **G** (ClaimScope): what exactly does the claim cover? (set-valued, NOT ordinal)
+  - **R** (Reliability): how likely is the claim true? ([0,1], min across chain)
+- **Close the loop** — evidence either corroborates or refutes. If refuted, update the problem framing and iterate.
+
+---
+
+## Reasoning cycle (ADI)
+
+All thinking follows: **Abduction → Deduction → Induction**
+
+| Phase | What happens | Output |
+|-------|-------------|--------|
+| **Abduction** | Generate hypotheses, frame problems, propose explanations | Problem cards, anomaly records, candidate hypotheses |
+| **Deduction** | Derive predictions, define what MUST follow if hypothesis is true | Falsifiable predictions, acceptance specs, logical consequences |
+| **Induction** | Test predictions against evidence, update confidence | Evidence records, corroboration/refutation, confidence update |
+
+**Anti-patterns to avoid:**
+- Jumping to solutions without framing the problem (skipping abduction)
+- Testing without predictions (skipping deduction — "data dredging")
+- Claiming "verified" without recorded evidence (skipping induction)
+
+---
+
+## Lifecycle stages
+
+Every artifact progresses: **Explore → Shape → Evidence → Operate**
+
+| Stage | Activity | ADI phase |
+|-------|----------|-----------|
+| **Explore** | Generate possibilities, brainstorm, question assumptions | Abduction |
+| **Shape** | Select direction, define architecture, ensure internal consistency | Deduction |
+| **Evidence** | Test against reality, validate claims, measure performance | Induction |
+| **Operate** | Deploy, monitor, maintain | Continuous induction |
+
+Always state which stage you're in. Don't skip stages.
+
+---
+
+## Core invariants (the rules that always hold)
+
+- **WLNK** — System quality = min(component qualities). The weakest link bounds the whole. Always identify it.
+- **MONO** — Improving a part cannot worsen the whole. Adding a part adds a new potential weak link — justify the cost.
+- **IDEM** — Evaluating a single element in isolation must return that element unchanged (no accidental upgrade/downgrade).
+- **COMM/LOC** — For independent components, evaluation order and location don't matter. When dependencies exist, order matters and must be controlled.
+
+---
+
+## Key distinctions (always maintain these)
+
+- **Plan ≠ Reality** — a model is not the thing it models
+- **Object ≠ Description ≠ Carrier** — the system, its spec, and its implementation are three different things
+- **Resolve "process"** — always disambiguate into: Role | Capability | Method | Work | WorkPlan
+- **Design-time vs Run-time** — planning and modeling vs acting and observing
+- **Commensurability (CL 0-3)** — before comparing two things, assess how comparable they are:
+  - 0 = Opposed (contradictory frames)
+  - 1 = Comparable (same domain, different frameworks)
+  - 2 = Translatable (systematic mapping exists)
+  - 3 = Near-identity (same framework, minor differences)
+
+---
+
+## When to search the RAG
+
+The above is enough for applying FPF reasoning. Search `fpf-rag` when you need:
+
+- **Specific templates** — exact format for problem cards, evidence records, decision records, etc.
+- **Deep definitions** — formal specification of a concept beyond the summary above
+- **Conformance checklists** — detailed rules for a specific FPF pattern
+- **Aggregation rules** — how to compose assessments across components (Γ flavours)
+- **Specific patterns** — A.* (concept patterns) or B.* (process patterns) by number
 
 ```bash
-# Snippet search (default)
+# Quick search
 ~/.claude/skills/fpf/references/fpf-rag search "<query>"
 
-# Full sections (more context)
+# Full section content
 ~/.claude/skills/fpf/references/fpf-rag search "<query>" --full
 
-# Limit results
-~/.claude/skills/fpf/references/fpf-rag search "<query>" --limit 5
-
-# Get a specific section by heading
+# Specific section by heading
 ~/.claude/skills/fpf/references/fpf-rag section "<heading>"
-
-# Version info
-~/.claude/skills/fpf/references/fpf-rag info
 ```
 
-## Inline index — key concepts and search terms
+---
 
-Use this index to decide WHEN to search. If a concept below is relevant, run a search for deeper context.
+## Concept index (search terms)
 
-### Core reasoning cycle
-- **ADI cycle** — Abduction → Deduction → Induction. Frame hypotheses, derive predictions, test against evidence.
-- **Lifecycle stages** — Explore → Shape → Evidence → Operate. Always state current stage.
+**Problem design:** problem card, PROB, anomaly, ANOM, characterization, CHR, problem portfolio, PPORT, goldilocks, trade-off axes, acceptance spec
 
-### Principles
-- **WLNK (Weak Link)** — System reliability = min(component reliabilities). The weakest link bounds the whole.
-- **MONO (Monotonicity)** — Adding components adds weak links. Benefit must justify new vulnerabilities.
-- **BLP (Better Learning Policy)** — At comparable budgets, prefer methods with better scaling slopes.
-- **NQD (Name-Quality-Duration)** — Never collapse to single score. Q references multi-dimensional indicators.
-- **F-G-R** — Formality (ordinal, min), ClaimScope (set-valued, NOT ordinal), Reliability ([0,1], min).
-- **CL 0-3** — Commensurability levels: 0=Opposed, 1=Comparable, 2=Translatable, 3=Near-identity.
-- **Parity** — Fair comparison requires equal conditions. Use Parity Plan before comparing variants.
-- **Anti-Goodhart** — Distinguish observation indicators, acceptance criteria, and optimization targets (1-3 max).
-- **E/E policy** — Explore for unfamiliar; exploit for known. Default: explore. Preserve stepping stones.
+**Solution design:** SoTA survey, SOTA, strategy card, STRAT, method family, invalidation conditions, solution portfolio, SPORT, variant generation, NQD, stepping stones
 
-### Problem design
-- **Problem card (PROB-*)** — ≥3 hypotheses, trade-off axes, goldilocks assessment, acceptance spec
-- **Anomaly record (ANOM-*)** — Observations, hypotheses, test plan
-- **Characterization (CHR-*)** — Characteristic space, indicators, comparison rules
-- **Problem portfolio (PPORT-*)** — Multiple problems with selection rules and diversification
+**Selection:** Pareto front, selection policy, SEL, parity plan, PAR, fair comparison, Pareto analysis
 
-### Solution design
-- **SoTA survey (SOTA-*)** — ≥2 traditions, bridge matrix with CL 0-3, gaps
-- **Strategy card (STRAT-*)** — Method family bet, invalidation conditions, variant generation axes
-- **Solution portfolio (SPORT-*)** — ≥3 genuinely distinct variants, NQD per indicators, stepping stones
-- **Selection (SEL-*)** — Pareto analysis, policy stated before applying, stepping-stone bets
-- **Parity plan (PAR-*)** — Equal conditions for fair comparison
+**Evidence:** evidence record, EVID, predictions, corroboration, refutation, F-G-R, assurance level, L0, L1, L2
 
-### Evidence and decisions
-- **Evidence record (EVID-*)** — Predictions before testing, commands + outputs, F-G-R assessment
-- **Decision record (DRR-*)** — Options, rationale, risks, rollback plan for irreversible decisions
+**Decisions:** decision record, DRR, irreversible, rollback plan, options, rationale
 
-### Key distinctions
-- Plan ≠ reality
-- Object ≠ description ≠ carrier
-- "Process" → resolve to: Role | Capability | Method | Work | WorkPlan
-- Design-time (Plan & Model) vs Run-time (Actions & Observations)
+**Aggregation:** Gamma, fold, Quintet, IDEM, COMM, LOC, WLNK, MONO, weakest link, cutset
 
-### Methodology
-- **Coupled double-loop factories** — Problem factory (creative: problematization) + Solution factory (creative: strategizing + variants) + Factory of factories (meta)
-- **Task tiers** — T1 (trivial) → T2 (localized) → T3 (substantive) → T4 (architectural)
-- **Constraints** — Creative (C1-C4), Assurance (C5-C8), Session (C9-C10)
+**Reasoning:** ADI cycle, abduction, deduction, induction, explore, shape, evidence, operate, lifecycle
+
+**Comparison:** commensurability, CL 0-3, bridge matrix, translation, near-identity, opposed
