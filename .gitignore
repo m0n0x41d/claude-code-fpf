@@ -1,0 +1,11 @@
+# FPF source data (downloaded by `task sync`)
+data/FPF/
+
+# Built artifacts
+dist/
+/fpf-rag
+
+# Go
+*.exe
+*.test
+*.out
