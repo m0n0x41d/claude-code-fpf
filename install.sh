@@ -62,15 +62,18 @@ mv -f "${BINARY}.tmp" "$BINARY"
 
 # Download skill file
 echo "  Downloading skill file..."
-curl -sfL "https://raw.githubusercontent.com/${REPO}/main/skill/fpf.md" \
-  -o "${SKILL_DIR}/fpf.md"
+curl -sfL "https://raw.githubusercontent.com/${REPO}/main/skill/fpf/SKILL.md" \
+  -o "${SKILL_DIR}/SKILL.md"
+
+# Clean up legacy skill file name
+rm -f "${SKILL_DIR}/fpf.md"
 
 # Record installed version
 echo "$LATEST_TAG" > "$VERSION_FILE"
 
 echo ""
 echo "Done! ${LATEST_TAG}"
-echo "  Skill:  ${SKILL_DIR}/fpf.md"
+echo "  Skill:  ${SKILL_DIR}/SKILL.md"
 echo "  Binary: ${BINARY}"
 echo ""
 echo "The /fpf skill is now available in Claude Code."
