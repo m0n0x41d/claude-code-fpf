@@ -65,25 +65,61 @@ tasks:
         done
 
   release:
-    desc: "Full release: sync → check for changes → build → tag → push"
+    desc: "Full release: sync → detect changes (upstream FPF or repo) → build → tag"
     cmds:
       - task: sync
       - |
+        FPF_CHANGED=false
+        REPO_CHANGED=false
+
+        # Check upstream FPF changes
         NEW_SHA=$(cat FPF_VERSION)
         OLD_SHA=$(git show HEAD:FPF_VERSION 2>/dev/null || echo "")
-        if [ "$NEW_SHA" = "$OLD_SHA" ]; then
-          echo "✓ No upstream changes. Nothing to release."
+        if [ "$NEW_SHA" != "$OLD_SHA" ]; then
+          FPF_CHANGED=true
+          echo "New FPF version detected: $NEW_SHA"
+        fi
+
+        # Check repo changes since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          REPO_CHANGED=true
+          echo "No previous tags found — first release."
+        elif [ "$(git rev-parse HEAD)" != "$(git rev-parse "$LAST_TAG")" ]; then
+          REPO_CHANGED=true
+          echo "Unreleased commits since $LAST_TAG:"
+          git log --oneline "$LAST_TAG"..HEAD
+        fi
+
+        if [ "$FPF_CHANGED" = false ] && [ "$REPO_CHANGED" = false ]; then
+          echo "✓ No changes to release."
           exit 0
         fi
 
-        echo "New FPF version detected: $NEW_SHA"
-        echo "Building index..."
-        FPF_SHA=$(cat FPF_VERSION)
-        go run ./cmd/indexer "{{.FPF_DIR}}/FPF-Spec.md" "{{.DB_PATH}}" "$FPF_SHA"
+        # Rebuild index if upstream FPF changed
+        if [ "$FPF_CHANGED" = true ]; then
+          echo "Building index..."
+          FPF_SHA=$(cat FPF_VERSION)
+          go run ./cmd/indexer "{{.FPF_DIR}}/FPF-Spec.md" "{{.DB_PATH}}" "$FPF_SHA"
 
+          git add FPF_VERSION {{.DB_PATH}}
+          git commit -m "chore: update FPF index to ${FPF_SHA:0:7}
+
+        FPF upstream commit: $FPF_SHA
+        https://github.com/ailev/FPF/commit/$FPF_SHA"
+        fi
+
+        # Cross-compile
         echo "Cross-compiling..."
         mkdir -p {{.DIST_DIR}}
         VERSION="v0.$(date +%Y.%m%d)"
+        if git rev-parse "$VERSION" >/dev/null 2>&1; then
+          I=1
+          while git rev-parse "${VERSION}.${I}" >/dev/null 2>&1; do
+            I=$((I + 1))
+          done
+          VERSION="${VERSION}.${I}"
+        fi
         for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
           OS="${target%%/*}"
           ARCH="${target##*/}"
@@ -92,13 +128,7 @@ tasks:
           GOOS=$OS GOARCH=$ARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "$OUT" ./cmd/fpf-rag
         done
 
-        git add FPF_VERSION {{.DB_PATH}}
-        git commit -m "chore: update FPF index to ${FPF_SHA:0:7}
-
-        FPF upstream commit: $FPF_SHA
-        https://github.com/ailev/FPF/commit/$FPF_SHA"
-
-        git tag -a "$VERSION" -m "Release $VERSION (FPF: ${FPF_SHA:0:7})"
+        git tag -a "$VERSION" -m "Release $VERSION"
         echo "Tagged $VERSION. Run 'git push && git push --tags' to trigger CI release."
 
   clean:
